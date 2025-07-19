@@ -27,6 +27,7 @@ export default function Slider({
   return (
     <div className={`relative ${className}`}>
       <input
+        data-testid="bet-slider"
         type="range"
         min={min}
         max={max}

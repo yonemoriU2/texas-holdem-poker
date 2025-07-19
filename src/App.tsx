@@ -1,13 +1,16 @@
 import { GameProvider } from './context/GameContext';
 import GameBoard from './components/Game/GameBoard';
+import ErrorBoundary from './components/UI/ErrorBoundary';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <GameProvider>
-        <GameBoard />
-      </GameProvider>
+      <ErrorBoundary>
+        <GameProvider>
+          <GameBoard />
+        </GameProvider>
+      </ErrorBoundary>
     </div>
   );
 }

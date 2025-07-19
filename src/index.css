@@ -2,54 +2,278 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-poker-green min-h-screen font-poker;
+/* カスタムアニメーション */
+@keyframes flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
   }
 }
 
-@layer components {
+@keyframes cardDeal {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8) rotate(-5deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-10px) scale(0.9) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes chipBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* アニメーションクラス */
+.animate-flip {
+  animation: flip 0.3s ease-in-out;
+}
+
+.animate-card-deal {
+  animation: cardDeal 0.5s ease-out;
+}
+
+.animate-chip-bounce {
+  animation: chipBounce 0.6s ease-in-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* カードホバー効果 */
+.card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.card-back:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* ボタンホバー効果 */
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
   .card {
-    @apply bg-white rounded-lg shadow-lg border border-gray-300;
-    aspect-ratio: 2.5/3.5;
+    transform: scale(0.9);
+  }
+  
+  .card:hover {
+    transform: scale(0.95) translateY(-2px);
+  }
+  
+  .player-area {
+    padding: 1rem;
+  }
+  
+  .community-card-area {
+    padding: 1rem;
+  }
+  
+  .betting-actions {
+    padding: 1rem;
+  }
+  
+  .game-board {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .header div {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    transform: scale(0.8);
+  }
+  
+  .card:hover {
+    transform: scale(0.85) translateY(-1px);
+  }
+  
+  .player-area {
+    padding: 0.75rem;
+  }
+  
+  .community-card-area {
+    padding: 0.75rem;
+  }
+  
+  .betting-actions {
+    padding: 0.75rem;
+  }
+  
+  .game-board {
+    padding: 0.75rem;
+    margin: 0.25rem;
+  }
+  
+  .header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .header div {
+    font-size: 0.75rem;
+  }
+  
+  .player-cards {
+    gap: 0.25rem;
+  }
+  
+  .community-cards {
+    gap: 0.25rem;
+  }
+}
+
+/* タッチデバイス用の最適化 */
+@media (hover: none) and (pointer: coarse) {
+  .card:hover {
+    transform: none;
+  }
+  
+  .card-back:hover {
+    transform: none;
+  }
+  
+  .btn-primary:hover {
+    transform: none;
+  }
+  
+  .btn-secondary:hover {
+    transform: none;
+  }
+  
+  .btn-danger:hover {
+    transform: none;
+  }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: #ffffff;
+    color: #000000;
   }
   
   .card-back {
-    @apply bg-blue-800 rounded-lg shadow-lg border border-gray-300;
-    aspect-ratio: 2.5/3.5;
-    background-image: repeating-linear-gradient(
-      45deg,
-      #1e40af,
-      #1e40af 10px,
-      #3b82f6 10px,
-      #3b82f6 20px
-    );
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+  }
+}
+
+/* アクセシビリティ改善 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flip,
+  .animate-card-deal,
+  .animate-chip-bounce,
+  .animate-slide-in,
+  .animate-fade-in-up,
+  .animate-pulse {
+    animation: none;
   }
   
-  .poker-chip {
-    @apply rounded-full border-4 border-white shadow-lg;
+  .card:hover,
+  .card-back:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-danger:hover {
+    transform: none;
   }
-  
-  .action-button {
-    @apply px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 hover:scale-105 active:scale-95;
-  }
-  
-  .animate-card-deal {
-    animation: cardDeal 0.6s ease-out;
-  }
-  
-  @keyframes cardDeal {
-    0% {
-      opacity: 0;
-      transform: translateY(-20px) scale(0.8);
-    }
-    50% {
-      opacity: 0.7;
-      transform: translateY(-10px) scale(0.9);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
+}
+
+/* フォーカス表示の改善 */
+.card:focus,
+.card-back:focus,
+button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* スクロールバーのカスタマイズ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }

@@ -29,7 +29,9 @@ export default function PlayerStatus({ player, isActive = false }: PlayerStatusP
 
   return (
     <div className="player-status text-center">
-      <span className={`status-text inline-block px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${statusClass}`}>
+      <span 
+        data-testid={player.id === 'player' ? 'player-status' : 'cpu-status'}
+        className={`status-text inline-block px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${statusClass}`}>
         {statusText}
       </span>
     </div>

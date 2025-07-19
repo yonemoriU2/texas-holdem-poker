@@ -15,6 +15,7 @@ export default function CommunityCardArea({
 }: CommunityCardAreaProps) {
   const [animatedCards, setAnimatedCards] = useState<boolean[]>([]);
   const [phaseTransition, setPhaseTransition] = useState(false);
+  const [dealAnimation, setDealAnimation] = useState(false);
 
   // ゲームフェーズに応じて表示するカード数を決定
   const getVisibleCardCount = (phase: GamePhase): number => {
@@ -39,6 +40,7 @@ export default function CommunityCardArea({
   // フェーズ遷移時のアニメーション処理
   useEffect(() => {
     setPhaseTransition(true);
+    setDealAnimation(true);
     
     const timer = setTimeout(() => {
       setPhaseTransition(false);
@@ -49,7 +51,14 @@ export default function CommunityCardArea({
       setAnimatedCards(newAnimatedCards);
     }, 300);
 
-    return () => clearTimeout(timer);
+    const dealTimer = setTimeout(() => {
+      setDealAnimation(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(dealTimer);
+    };
   }, [gamePhase, visibleCardCount]);
 
   // フェーズ名の取得
@@ -74,12 +83,12 @@ export default function CommunityCardArea({
 
   return (
     <div 
-      className={`community-card-area ${className} flex flex-col items-center justify-center p-6 bg-green-800/50 backdrop-blur-sm rounded-lg shadow-lg transition-all duration-300 border-2 border-green-600`}
+      className={`community-card-area ${className} flex flex-col items-center justify-center p-6 bg-green-800/50 backdrop-blur-sm rounded-lg shadow-lg transition-all duration-500 border-2 border-green-600 relative overflow-hidden`}
       data-testid="community-card-area"
     >
-      <h3 className="text-white text-lg font-bold mb-4">コミュニティカード</h3>
+      <h3 className="text-white text-lg font-bold mb-4 animate-slide-in">コミュニティカード</h3>
       
-      <div className="flex gap-3 justify-center items-center min-h-[6rem]">
+      <div className="flex gap-3 justify-center items-center min-h-[6rem] relative">
         {Array.from({ length: 5 }, (_, index) => {
           const card = communityCards[index];
           const isVisible = index < visibleCardCount;
@@ -88,16 +97,16 @@ export default function CommunityCardArea({
           return (
             <div 
               key={index}
-              className={`transition-all duration-500 ease-out ${
+              className={`transition-all duration-700 ease-out transform ${
                 isVisible && isAnimated 
-                  ? 'opacity-100 scale-100 translate-y-0' 
-                  : 'opacity-0 scale-75 translate-y-4'
+                  ? 'opacity-100 scale-100 translate-y-0 rotate-0' 
+                  : 'opacity-0 scale-75 translate-y-8 rotate-12'
+              } ${
+                phaseTransition && isVisible ? 'animate-pulse' : ''
               }`}
               style={{
-                animationDelay: isVisible ? `${index * 150}ms` : '0ms',
-                transform: phaseTransition && isVisible 
-                  ? 'scale(1.1) rotate(2deg)' 
-                  : undefined
+                animationDelay: isVisible ? `${index * 200}ms` : '0ms',
+                transitionDelay: isVisible ? `${index * 200}ms` : '0ms'
               }}
             >
               {card && isVisible ? (
@@ -105,13 +114,15 @@ export default function CommunityCardArea({
                   card={card} 
                   faceUp={true} 
                   size="medium"
-                  className={`animate-card-deal ${
+                  dealAnimation={dealAnimation}
+                  dealDelay={index * 200}
+                  className={`${
                     phaseTransition ? 'animate-pulse' : ''
-                  }`}
+                  } hover:scale-110 hover:z-10 transition-transform duration-300`}
                 />
               ) : (
-                <div className="w-16 h-24 bg-gray-700/50 backdrop-blur-sm rounded-lg border-2 border-gray-600 flex items-center justify-center transition-all duration-300">
-                  <div className="text-gray-400 text-xs">?</div>
+                <div className="w-16 h-24 bg-gray-700/50 backdrop-blur-sm rounded-lg border-2 border-gray-600 flex items-center justify-center transition-all duration-500 hover:scale-110">
+                  <div className="text-gray-400 text-xs animate-pulse">?</div>
                 </div>
               )}
             </div>
@@ -119,15 +130,20 @@ export default function CommunityCardArea({
         })}
       </div>
       
-      <div className={`mt-4 text-white text-sm font-semibold transition-all duration-300 ${
-        phaseTransition ? 'scale-110 text-yellow-300' : ''
+      <div className={`mt-4 text-white text-sm font-semibold transition-all duration-500 ${
+        phaseTransition ? 'scale-110 text-yellow-300 animate-pulse' : ''
       }`}>
         {getPhaseName(gamePhase)}
       </div>
       
       {/* フェーズ遷移時の視覚的フィードバック */}
       {phaseTransition && (
-        <div className="absolute inset-0 bg-yellow-400 bg-opacity-20 rounded-lg animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 bg-yellow-400/20 rounded-lg animate-pulse pointer-events-none" />
+      )}
+      
+      {/* カード配布時の光効果 */}
+      {dealAnimation && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent animate-pulse pointer-events-none" />
       )}
     </div>
   );

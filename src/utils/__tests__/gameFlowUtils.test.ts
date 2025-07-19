@@ -6,16 +6,20 @@ import {
   getNextPhase,
   initializePhaseTransition,
   shouldStartShowdown,
-  shouldEndGame,
   getBettingRoundProgress,
   canPlayerAct,
   getPhaseDescription,
   getPhaseOrder,
   getPhaseIndex,
-  isPhaseCompleted
+  isPhaseCompleted,
+  checkGameOver,
+  canStartNewHand,
+  canStartNewGame,
+  checkHandEndState
 } from '../gameFlowUtils';
 import type { GameState } from '../../types/game';
 import type { Player } from '../../types/player';
+import type { GamePhase } from '../../types/game';
 
 describe('gameFlowUtils', () => {
   let mockGameState: GameState;
@@ -48,7 +52,7 @@ describe('gameFlowUtils', () => {
     ];
 
     mockGameState = {
-      players: [],
+      players: mockPlayers,
       communityCards: [],
       pot: 0,
       currentBet: 0,
@@ -64,7 +68,12 @@ describe('gameFlowUtils', () => {
       bbAnte: 0,
       handNumber: 1,
       blindLevel: 1,
-      handsUntilBlindIncrease: 10
+      handsUntilBlindIncrease: 10,
+      // ゲーム継続機能の初期状態
+      isGameOver: false,
+      gameOverReason: null,
+      canStartNewHand: true,
+      canStartNewGame: true
     };
   });
 
@@ -209,17 +218,16 @@ describe('gameFlowUtils', () => {
     });
   });
 
-  describe('shouldEndGame', () => {
-    it('ショーダウンフェーズではtrueを返す', () => {
-      mockGameState.gamePhase = 'showdown';
+  describe('checkGameOver', () => {
+    it('プレイヤーのチップが不足している場合、ゲーム終了を判定する', () => {
+      mockGameState.players[0].chips = 10; // 最小必要額25未満
+      mockGameState.players[1].chips = 100;
 
-      expect(shouldEndGame(mockGameState)).toBe(true);
-    });
+      const result = checkGameOver(mockGameState.players, mockGameState.smallBlind, mockGameState.bigBlind, mockGameState.bbAnte);
 
-    it('プレイヤーのチップが0になった場合、trueを返す', () => {
-      mockGameState.players[0].chips = 0;
-
-      expect(shouldEndGame(mockGameState)).toBe(true);
+      expect(result.isGameOver).toBe(true);
+      expect(result.reason).toBe('プレイヤーのチップが不足しています');
+      expect(result.winner).toBe('cpu');
     });
   });
 
@@ -298,6 +306,179 @@ describe('gameFlowUtils', () => {
       expect(isPhaseCompleted('flop', 'turn')).toBe(true);
       expect(isPhaseCompleted('flop', 'preflop')).toBe(false);
       expect(isPhaseCompleted('river', 'river')).toBe(false);
+    });
+  });
+});
+
+describe('Game Continuation Functions', () => {
+  const createPlayer = (id: string, chips: number): Player => ({
+    id,
+    name: id === 'player' ? 'プレイヤー' : 'CPU',
+    chips,
+    holeCards: [],
+    currentBet: 0,
+    hasActed: false,
+    hasFolded: false,
+    isAllIn: false,
+    isDealer: false
+  });
+
+  describe('checkGameOver', () => {
+    it('両プレイヤーのチップが不足している場合、ゲーム終了を判定する', () => {
+      const players = [
+        createPlayer('player', 10), // 最小必要額25未満
+        createPlayer('cpu', 15)     // 最小必要額25未満
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.isGameOver).toBe(true);
+      expect(result.reason).toBe('両プレイヤーのチップが不足しています');
+      expect(result.winner).toBe(null);
+    });
+
+    it('プレイヤーのチップが不足している場合、CPUの勝利を判定する', () => {
+      const players = [
+        createPlayer('player', 20), // 最小必要額25未満
+        createPlayer('cpu', 100)    // 十分なチップ
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.isGameOver).toBe(true);
+      expect(result.reason).toBe('プレイヤーのチップが不足しています');
+      expect(result.winner).toBe('cpu');
+    });
+
+    it('CPUのチップが不足している場合、プレイヤーの勝利を判定する', () => {
+      const players = [
+        createPlayer('player', 100), // 十分なチップ
+        createPlayer('cpu', 20)      // 最小必要額25未満
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.isGameOver).toBe(true);
+      expect(result.reason).toBe('CPUのチップが不足しています');
+      expect(result.winner).toBe('player');
+    });
+
+    it('両プレイヤーが十分なチップを持っている場合、ゲーム継続を判定する', () => {
+      const players = [
+        createPlayer('player', 100), // 十分なチップ
+        createPlayer('cpu', 100)     // 十分なチップ
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.isGameOver).toBe(false);
+      expect(result.reason).toBe(null);
+      expect(result.winner).toBe(null);
+    });
+  });
+
+  describe('canStartNewHand', () => {
+    it('ゲーム終了条件に該当しない場合、新しいハンドを開始できる', () => {
+      const players = [
+        createPlayer('player', 100),
+        createPlayer('cpu', 100)
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = canStartNewHand(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result).toBe(true);
+    });
+
+    it('ゲーム終了条件に該当する場合、新しいハンドを開始できない', () => {
+      const players = [
+        createPlayer('player', 20),
+        createPlayer('cpu', 100)
+      ];
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = canStartNewHand(players, smallBlind, bigBlind, bbAnte);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('canStartNewGame', () => {
+    it('常に新しいゲームを開始できる', () => {
+      const result = canStartNewGame();
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('checkHandEndState', () => {
+    it('ショーダウンフェーズでゲーム終了条件に該当しない場合、新しいハンドを開始できる', () => {
+      const players = [
+        createPlayer('player', 100),
+        createPlayer('cpu', 100)
+      ];
+      const gamePhase: GamePhase = 'showdown';
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkHandEndState(gamePhase, players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.canStartNewHand).toBe(true);
+      expect(result.canStartNewGame).toBe(true);
+      expect(result.isGameOver).toBe(false);
+      expect(result.gameOverReason).toBe(null);
+    });
+
+    it('ショーダウンフェーズでゲーム終了条件に該当する場合、新しいハンドを開始できない', () => {
+      const players = [
+        createPlayer('player', 20),
+        createPlayer('cpu', 100)
+      ];
+      const gamePhase: GamePhase = 'showdown';
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkHandEndState(gamePhase, players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.canStartNewHand).toBe(false);
+      expect(result.canStartNewGame).toBe(true);
+      expect(result.isGameOver).toBe(true);
+      expect(result.gameOverReason).toBe('プレイヤーのチップが不足しています');
+    });
+
+    it('プリフロップフェーズでは新しいハンドを開始できない', () => {
+      const players = [
+        createPlayer('player', 100),
+        createPlayer('cpu', 100)
+      ];
+      const gamePhase: GamePhase = 'preflop';
+      const smallBlind = 10;
+      const bigBlind = 20;
+      const bbAnte = 5;
+
+      const result = checkHandEndState(gamePhase, players, smallBlind, bigBlind, bbAnte);
+
+      expect(result.canStartNewHand).toBe(false);
+      expect(result.canStartNewGame).toBe(true);
+      expect(result.isGameOver).toBe(false);
+      expect(result.gameOverReason).toBe(null);
     });
   });
 }); 

@@ -92,7 +92,12 @@ describe('BettingActions', () => {
     expect(screen.getByText('フォールド')).toBeInTheDocument();
     expect(screen.getByText('チェック')).toBeInTheDocument();
     expect(screen.getByText('ベット')).toBeInTheDocument();
-    expect(screen.getByText('オールイン $1000')).toBeInTheDocument();
+    expect(
+      screen.getByText((content, node) => {
+        const text = node?.textContent?.replace(/\s/g, '');
+        return text === 'オールイン$1,000';
+      })
+    ).toBeInTheDocument();
   });
 
   it('ベットボタンをクリックするとスライダーが表示される', () => {

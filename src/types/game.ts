@@ -27,6 +27,11 @@ export interface GameState {
   handNumber: number;
   blindLevel: number;
   handsUntilBlindIncrease: number;
+  // ゲーム継続機能の追加
+  isGameOver: boolean;
+  gameOverReason: string | null;
+  canStartNewHand: boolean;
+  canStartNewGame: boolean;
 }
 
 export type GameAction =
@@ -44,7 +49,10 @@ export type GameAction =
   | { type: "RESET_GAME" }
   | { type: "SET_ACTIVE_PLAYER"; payload: { playerIndex: number } }
   | { type: "INCREASE_BLINDS" }
-  | { type: "SET_BLIND_LEVEL"; payload: { level: number } };
+  | { type: "SET_BLIND_LEVEL"; payload: { level: number } }
+  | { type: "CHECK_GAME_OVER" }
+  | { type: "START_NEW_GAME" }
+  | { type: "REPAIR_STATE"; payload: { repairedState: GameState } };
 
 export interface GameConfig {
   initialChips: number;

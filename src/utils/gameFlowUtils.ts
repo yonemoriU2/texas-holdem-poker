@@ -125,19 +125,101 @@ export function shouldStartShowdown(state: GameState): boolean {
 /**
  * ゲーム終了条件をチェックする
  */
-export function shouldEndGame(state: GameState): boolean {
-  // ショーダウンが完了した場合
-  if (state.gamePhase === 'showdown') {
-    return true;
+export function checkGameOver(players: Player[], smallBlind: number, bigBlind: number, bbAnte: number): {
+  isGameOver: boolean;
+  reason: string | null;
+  winner: string | null;
+} {
+  // プレイヤーのチップ数をチェック
+  const playerChips = players[0].chips;
+  const cpuChips = players[1].chips;
+  
+  // 必要な最小チップ数（ブラインド + BBアンティ）
+  const minRequiredChips = bigBlind + bbAnte;
+  
+  // 両プレイヤーが最小チップ数に満たない場合
+  if (playerChips < minRequiredChips && cpuChips < minRequiredChips) {
+    return {
+      isGameOver: true,
+      reason: "両プレイヤーのチップが不足しています",
+      winner: null
+    };
   }
   
-  // プレイヤーのチップが0になった場合
-  const playersWithChips = state.players.filter(p => p.chips > 0);
-  if (playersWithChips.length <= 1) {
-    return true;
+  // プレイヤーのチップが不足
+  if (playerChips < minRequiredChips) {
+    return {
+      isGameOver: true,
+      reason: "プレイヤーのチップが不足しています",
+      winner: "cpu"
+    };
   }
   
-  return false;
+  // CPUのチップが不足
+  if (cpuChips < minRequiredChips) {
+    return {
+      isGameOver: true,
+      reason: "CPUのチップが不足しています",
+      winner: "player"
+    };
+  }
+  
+  return {
+    isGameOver: false,
+    reason: null,
+    winner: null
+  };
+}
+
+/**
+ * 新しいハンドを開始できるかチェックする
+ */
+export function canStartNewHand(players: Player[], smallBlind: number, bigBlind: number, bbAnte: number): boolean {
+  const gameOverCheck = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+  return !gameOverCheck.isGameOver;
+}
+
+/**
+ * 新しいゲームを開始できるかチェックする
+ */
+export function canStartNewGame(): boolean {
+  // 新しいゲームは常に開始可能
+  return true;
+}
+
+/**
+ * ハンド終了後の状態をチェックする
+ */
+export function checkHandEndState(
+  gamePhase: GamePhase, 
+  players: Player[], 
+  smallBlind: number, 
+  bigBlind: number, 
+  bbAnte: number
+): {
+  canStartNewHand: boolean;
+  canStartNewGame: boolean;
+  isGameOver: boolean;
+  gameOverReason: string | null;
+} {
+  // ショーダウンまたはゲーム終了フェーズでのみチェック
+  if (gamePhase !== 'showdown' && gamePhase !== 'ended') {
+    return {
+      canStartNewHand: false,
+      canStartNewGame: true,
+      isGameOver: false,
+      gameOverReason: null
+    };
+  }
+  
+  const gameOverCheck = checkGameOver(players, smallBlind, bigBlind, bbAnte);
+  
+  return {
+    canStartNewHand: !gameOverCheck.isGameOver,
+    canStartNewGame: true,
+    isGameOver: gameOverCheck.isGameOver,
+    gameOverReason: gameOverCheck.reason
+  };
 }
 
 /**

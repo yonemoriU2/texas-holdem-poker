@@ -4,3 +4,5 @@ export { default as Chip } from './Chip';
 export { default as Slider } from './Slider';
 export { default as Modal } from './Modal';
 export { default as ChipAnimation, ChipPileAnimation } from './ChipAnimation';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as ErrorDisplay } from './ErrorDisplay';

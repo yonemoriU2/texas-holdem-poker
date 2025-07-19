@@ -20,7 +20,9 @@ export default function ShowdownDisplay({ gameState, onContinue }: ShowdownDispl
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl p-8 max-w-4xl w-full mx-4 border-4 border-yellow-400 shadow-2xl">
+      <div 
+        data-testid="showdown-display"
+        className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl p-8 max-w-4xl w-full mx-4 border-4 border-yellow-400 shadow-2xl">
         {/* ヘッダー */}
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-yellow-800 mb-2">

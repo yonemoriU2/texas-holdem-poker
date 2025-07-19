@@ -8,6 +8,10 @@ import {
   canTransitionToNextPhase,
   getNextPhase,
   initializePhaseTransition,
+  checkGameOver,
+  canStartNewHand,
+  canStartNewGame,
+  checkHandEndState,
 } from '../utils/gameFlowUtils';
 import { 
   getBlindInfo, 
@@ -64,7 +68,12 @@ export function createInitialGameState(config: GameConfig = DEFAULT_GAME_CONFIG)
     bbAnte: blindInfo.bbAnte,
     handNumber: 0,
     blindLevel: 1,
-    handsUntilBlindIncrease: config.blindIncreaseInterval
+    handsUntilBlindIncrease: config.blindIncreaseInterval,
+    // ゲーム継続機能の初期状態
+    isGameOver: false,
+    gameOverReason: null,
+    canStartNewHand: true,
+    canStartNewGame: true
   };
 }
 
@@ -108,6 +117,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'SET_BLIND_LEVEL':
       return setBlindLevel(state, action.payload.level);
+    
+    case 'CHECK_GAME_OVER':
+      return checkGameOverState(state);
+    
+    case 'START_NEW_GAME':
+      return startNewGame(state);
+    
+    case 'REPAIR_STATE':
+      return action.payload.repairedState;
     
     default:
       return state;
@@ -465,6 +483,26 @@ function distributePot(state: GameState): GameState {
   newState.isGameActive = false;
   newState.gamePhase = 'ended';
   
+  // ゲーム終了状態をチェック
+  const gameOverCheck = checkGameOver(newState.players, newState.smallBlind, newState.bigBlind, newState.bbAnte);
+  const handEndState = checkHandEndState(
+    newState.gamePhase,
+    newState.players,
+    newState.smallBlind,
+    newState.bigBlind,
+    newState.bbAnte
+  );
+  
+  newState.isGameOver = gameOverCheck.isGameOver;
+  newState.gameOverReason = gameOverCheck.reason;
+  newState.canStartNewHand = handEndState.canStartNewHand;
+  newState.canStartNewGame = handEndState.canStartNewGame;
+  
+  // ゲーム終了の場合、勝者を設定
+  if (gameOverCheck.isGameOver && gameOverCheck.winner) {
+    newState.winner = gameOverCheck.winner;
+  }
+  
   return newState;
 }
 
@@ -521,6 +559,54 @@ function newHand(state: GameState): GameState {
   newState.isGameActive = false;
   
   return newState;
+}
+
+/**
+ * ゲーム終了状態をチェックする
+ */
+function checkGameOverState(state: GameState): GameState {
+  const newState = { ...state };
+  
+  const gameOverCheck = checkGameOver(state.players, state.smallBlind, state.bigBlind, state.bbAnte);
+  const handEndState = checkHandEndState(
+    state.gamePhase,
+    state.players,
+    state.smallBlind,
+    state.bigBlind,
+    state.bbAnte
+  );
+  
+  newState.isGameOver = gameOverCheck.isGameOver;
+  newState.gameOverReason = gameOverCheck.reason;
+  newState.canStartNewHand = handEndState.canStartNewHand;
+  newState.canStartNewGame = handEndState.canStartNewGame;
+  
+  // ゲーム終了の場合、勝者を設定
+  if (gameOverCheck.isGameOver && gameOverCheck.winner) {
+    newState.winner = gameOverCheck.winner;
+    newState.gamePhase = 'ended';
+    newState.isGameActive = false;
+  }
+  
+  return newState;
+}
+
+/**
+ * 新しいゲームを開始する
+ */
+function startNewGame(state: GameState): GameState {
+  const config = {
+    initialChips: 1000,
+    smallBlind: 10,
+    bigBlind: 20,
+    bbAnte: 5,
+    playerName: state.players[0].name,
+    cpuName: state.players[1].name,
+    blindIncreaseInterval: 10,
+    blindIncreaseMultiplier: 1.5
+  };
+  
+  return createInitialGameState(config);
 }
 
 /**
