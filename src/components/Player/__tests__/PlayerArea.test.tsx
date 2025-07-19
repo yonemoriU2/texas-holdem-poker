@@ -52,7 +52,7 @@ describe('PlayerArea', () => {
     render(<PlayerArea player={mockPlayer} showCards={true} />);
     
     // カードが表示されているかチェック（実際のカードの内容は Card コンポーネントのテストで確認）
-    const cards = screen.getAllByTestId(/card/);
+    const cards = screen.getAllByTestId('card');
     expect(cards).toHaveLength(2);
   });
 

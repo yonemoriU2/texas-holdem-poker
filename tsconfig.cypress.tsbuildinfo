@@ -1,0 +1,1 @@
+{"root":["./cypress/e2e/ai-behavior.cy.ts","./cypress/e2e/complete-game-scenarios.cy.ts","./cypress/e2e/debug.cy.ts","./cypress/e2e/integration.cy.ts","./cypress/e2e/poker.cy.ts","./cypress/e2e/simple.cy.ts","./cypress/e2e/user-interaction.cy.ts","./cypress/support/commands.ts","./cypress/support/e2e.ts"],"errors":true,"version":"5.8.3"}
