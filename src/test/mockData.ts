@@ -15,6 +15,7 @@ export const createMockPlayer = (overrides: Partial<Player> = {}): Player => ({
   hasActed: false,
   hasFolded: false,
   isAllIn: false,
+  isDealer: false,
   ...overrides,
 });
 
@@ -23,6 +24,7 @@ export const createMockHandRank = (overrides: Partial<HandRank> = {}): HandRank 
   name: 'ハイカード',
   cards: [],
   kickers: [],
+  score: 1000,
   ...overrides,
 });
 
@@ -36,11 +38,15 @@ export const createMockGameState = (overrides: Partial<GameState> = {}): GameSta
   currentBet: 20,
   gamePhase: 'preflop',
   activePlayerIndex: 0,
+  dealerIndex: 0,
   deck: [],
   winner: null,
   winningHand: null,
   isGameActive: true,
   isGameOver: false,
+  gameOverReason: null,
+  canStartNewHand: false,
+  canStartNewGame: false,
   handNumber: 1,
   smallBlind: 10,
   bigBlind: 20,
